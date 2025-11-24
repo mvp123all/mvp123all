@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Game Tebak-Tebakan Rame 3</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #ffcc70, #ff8177);
+      text-align: center;
+      color: #333;
+    }
+    #game, #result { display: none; }
+    .question { font-size: 22px; margin: 20px; }
+    .choice { 
+      display: block; margin: 10px auto; padding: 10px; width: 200px; 
+      border-radius: 10px; border: none; cursor: pointer;
+      background: #fff; box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+    }
+    .choice:hover { background: #ffebc5; }
+    #score, #lives, #timer { font-size: 18px; margin: 10px; }
+    .correct { background: #8eff8e !important; }
+    .wrong { background: #ff8e8e !important; }
+  </style>
+</head>
+<body>
+  <h1>🎉 Game Tebak-Tebakan Rame 🎉</h1>
+  <div id="menu">
+    <p>Pilih kategori untuk memulai:</p>
+    <button onclick="startGame('logika')">🧠 Logika</button>
+    <button onclick="startGame('humor')">😂 Humor</button>
+    <button onclick="startGame('sains')">🔬 Sains</button>
+    <button onclick="startGame('pengetahuan')">📚 Pengetahuan</button>
+  </div>
+
+  <div id="game">
+    <div id="score">Skor: 0</div>
+    <div id="lives">❤️❤️❤️</div>
+    <div id="timer">⏱️ 15</div>
+    <div class="question" id="question"></div>
+    <div id="choices"></div>
+  </div>
+
+  <div id="result">
+    <h2>Game Over!</h2>
+    <p id="finalScore"></p>
+    <button onclick="location.reload()">Main Lagi 🔄</button>
+  </div>
+
+  <script>
+    const tebakans = {
+      logika: [
+        { q: "Ada 5 lilin menyala, 2 mati kena angin, berapa yang tersisa?", a: "2", choices: ["3", "2", "5", "0"] },
+        { q: "Jika 2 kucing bisa tangkap 2 tikus dalam 2 menit, berapa menit 100 kucing tangkap 100 tikus?", a: "2", choices: ["2", "20", "100", "200"] },
+        { q: "Aku sering turun tapi bukan tangga. Siapakah aku?", a: "Hujan", choices: ["Hujan","Air","Embun","Awan"], category: "alam" },
+        { q: "Semakin diambil, aku semakin besar. Siapakah aku?", a: "Lubang", choices: ["Lubang","Rahasia","Hutang","Bayangan"], category: "logika" },
+        { q: "Semakin sering aku dicukur, aku makin tumbuh. Aku siapa?", a: "Rambut", choices: ["Rumput","Bulu","Rambut","Pohon"], category: "logika" },
+        { q: "Aku ada sebelum kamu lahir, tapi aku tetap ada sesudahmu. Aku siapa?", a: "Waktu", choices: ["Ruang","Hari","Waktu","Bulan"], category: "logika" },
+        { q: "Aku selalu maju tapi tidak pernah mundur. Aku siapa?", a: "Waktu", choices: ["Waktu","Jam","Umur","Detik"], category: "logika" },
+        { q: "Aku ada di depanmu tapi tak bisa kau lihat. Aku siapa?", a: "Masa depan", choices: ["Masa depan","Bayangan","Udara","Cermin"], category: "logika" },
+        { q: "Aku tidak punya kaki, tapi aku bisa berjalan. Aku siapa?", a: "Jam", choices: ["Jam","Awan","Mobil","Air"], category: "logika" },
+
+      ],
+      humor: [
+        { q: "Kalau ayam berkokok, bebek?", a: "berkwek", choices: ["berkokok juga", "berkwek", "berdansa", "bernyanyi"] },
+        { q: "Buah apa yang selalu ditunggu?", a: "durian", choices: ["apel", "pisang", "durian", "mangga"] },
+        { q: "Aku selalu menempel di tubuhmu, aku siapa?", a: "Bayangan", choices: ["Baju","Bayangan","Rambut","Kulit"], category: "identitas" },
+        { q: "Aku punya nama tapi tidak punya wajah. Aku siapa?", a: "Huruf", choices: ["Nama","Huruf","Kata","Tulisan"], category: "identitas" },
+        { q: "Aku membuatmu berbeda dengan orang lain. Aku siapa?", a: "Nama", choices: ["Nama","Hobi","Umur","Pekerjaan"], category: "identitas" },
+        { q: "Aku rumah bagi pikiranmu. Aku siapa?", a: "Otak", choices: ["Hati","Otak","Roh","Nyawa"], category: "identitas" },
+        { q: "Aku selalu menyertaimu sejak lahir sampai mati. Aku siapa?", a: "Nama", choices: ["Bayangan","Nama","Umur","Takdir"], category: "identitas" },
+        { q: "Aku sering digunakan untuk melihat, aku siapa?", a: "Mata", choices: ["Telinga","Mata","Kaca","Lampu"], category: "identitas" }
+      ],
+      sains: [
+        { q: "Planet terdekat dengan matahari?", a: "Merkurius", choices: ["Bumi", "Mars", "Merkurius", "Venus"] },
+        { q: "Air mendidih pada suhu?", a: "100°C", choices: ["0°C", "50°C", "100°C", "200°C"] },
+        { q: "Aku datang setiap pagi membawa cahaya. Aku siapa?", a: "Matahari", choices: ["Bulan","Pelangi","Matahari","Bintang"], category: "waktu" },
+        { q: "Aku berlari tanpa kaki, aku berputar tanpa henti. Aku siapa?", a: "Waktu", choices: ["Jam","Waktu","Hari","Detik"], category: "waktu" },
+        { q: "Aku menandai tahun, aku jatuh setiap akhir Desember. Aku siapa?", a: "Kembang api", choices: ["Jam","Tahun","Kembang api","Kalender"], category: "waktu" },
+        { q: "Aku selalu menua tapi tidak pernah muda. Aku siapa?", a: "Umur", choices: ["Umur","Pohon","Hari","Masa"], category: "waktu" },
+        { q: "Aku punya 7 saudara, datang tiap minggu. Aku siapa?", a: "Hari", choices: ["Hari","Bulan","Tahun","Musim"], category: "waktu" },
+        { q: "Aku berputar setiap 365 hari. Aku siapa?", a: "Bumi", choices: ["Matahari","Bulan","Bumi","Jam"], category: "waktu" },
+
+      ],
+      pengetahuan: [
+        { q: "Ibu kota Australia adalah?", a: "Canberra", choices: ["Sydney", "Canberra", "Melbourne", "Perth"] },
+        { q: "Gunung tertinggi di dunia?", a: "Everest", choices: ["Kilimanjaro", "Everest", "Fuji", "Andes"] },
+        { q: "Aku punya banyak gigi tapi tidak bisa makan. Siapakah aku?", a: "Sisir", choices: ["Sisir","Paku","Kunci","Sepatu"], category: "benda" },
+        { q: "Aku selalu berputar tapi tidak pernah berjalan. Aku siapa?", a: "Kipas", choices: ["Jam","Kipas","Ban","Roda"], category: "benda" },
+        { q: "Aku bisa memotong tapi aku bukan pisau. Aku siapa?", a: "Gunting", choices: ["Gergaji","Paku","Gunting","Pisau"], category: "benda" },
+        { q: "Aku punya jarum tapi tidak bisa menjahit. Aku siapa?", a: "Jam", choices: ["Jam","Paku","Kompas","Kunci"], category: "benda" },
+        { q: "Aku bisa menyala tapi aku bukan matahari. Aku siapa?", a: "Lampu", choices: ["Api","Lampu","Bintang","Petir"], category: "benda" },
+        { q: "Aku bisa mengangkut banyak orang di jalan raya. Aku siapa?", a: "Bus", choices: ["Mobil","Bus","Kereta","Sepeda"], category: "benda" },
+        { q: "Aku selalu menampung air tapi aku bukan sungai. Aku siapa?", a: "Ember", choices: ["Kolam","Botol","Ember","Gelas"], category: "benda" },
+
+        
+      ]
+    };
+
+    let skor = 0, nyawa = 3, soal = [], current, timer;
+
+    function startGame(kategori) {
+      document.getElementById('menu').style.display = 'none';
+      document.getElementById('game').style.display = 'block';
+      soal = [...tebakans[kategori]].sort(() => Math.random() - 0.5);
+      nextQuestion();
+    }
+
+    function nextQuestion() {
+      if (soal.length === 0 || nyawa === 0) return endGame();
+      current = soal.pop();
+      document.getElementById('question').textContent = current.q;
+      const choicesDiv = document.getElementById('choices');
+      choicesDiv.innerHTML = "";
+      current.choices.sort(() => Math.random() - 0.5).forEach(c => {
+        const btn = document.createElement('button');
+        btn.textContent = c;
+        btn.className = "choice";
+        btn.onclick = () => checkAnswer(btn, c);
+        choicesDiv.appendChild(btn);
+      });
+      startTimer();
+    }
+
+    function checkAnswer(btn, choice) {
+      clearInterval(timer);
+      if (choice === current.a) {
+        skor += 10;
+        btn.classList.add("correct");
+      } else {
+        nyawa--;
+        btn.classList.add("wrong");
+      }
+      updateStatus();
+      setTimeout(nextQuestion, 800);
+    }
+
+    function startTimer() {
+      let time = 15;
+      document.getElementById('timer').textContent = "⏱️ " + time;
+      timer = setInterval(() => {
+        time--;
+        document.getElementById('timer').textContent = "⏱️ " + time;
+        if (time <= 0) {
+          clearInterval(timer);
+          nyawa--;
+          updateStatus();
+          nextQuestion();
+        }
+      }, 1000);
+    }
+
+    function updateStatus() {
+      document.getElementById('score').textContent = "Skor: " + skor;
+      document.getElementById('lives').textContent = "❤️".repeat(nyawa);
+    }
+
+    function endGame() {
+      document.getElementById('game').style.display = 'none';
+      document.getElementById('result').style.display = 'block';
+      document.getElementById('finalScore').textContent = "Skor akhir kamu: " + skor;
+    }
+  </script>
+</body>
+</html>
